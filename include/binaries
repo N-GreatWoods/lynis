@@ -26,6 +26,7 @@
     COMPILER_INSTALLED=0
     IDLE_SESSION_KILLER_INSTALLED=0
     MALWARE_SCANNER_INSTALLED=0
+    NETWORK_TOOLS_INSTALLED=0
 #
 #################################################################################
 #
@@ -281,6 +282,12 @@
                             xargs)                  XARGSBINARY="${BINARY}";           LogText "  Found known binary: xargs (command output redirection) - ${BINARY}" ;;
                             zgrep)                  ZGREPBINARY=${BINARY};             LogText "  Found known binary: zgrep (text search for compressed files) - ${BINARY}" ;;
                             zypper)                 ZYPPERBINARY="${BINARY}";          LogText "  Found known binary: zypper (package manager) - ${BINARY}" ;;
+                            #CRA CUSTOM
+                            nc)                     NCBINARY="${BINARY}";              NETWORK_TOOLS_INSTALLED=1;  LogText "  Found known network tool: nc (netcat) - ${BINARY}" ;;
+                            ncat)                   NCATBINARY="${BINARY}";            NETWORK_TOOLS_INSTALLED=1;  LogText "  Found known network tool: ncat (netcat) - ${BINARY}" ;;
+                            telnet)                 TELNETBINARY="${BINARY}";          NETWORK_TOOLS_INSTALLED=1;  LogText "  Found known network tool: telnet - ${BINARY}" ;;
+                            ssh)                    SSHBINARY="${BINARY}";             NETWORK_TOOLS_INSTALLED=1;  LogText "  Found known network tool: ssh - ${BINARY}" ;;
+
                         esac
                     done
                 else

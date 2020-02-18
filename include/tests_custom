@@ -1,0 +1,99 @@
+#!/bin/sh
+
+#################################################################################
+#
+# This is the custom tests file and serves as a template.
+#
+# The language used in bourne shell (not bash). That means that almost everything
+# you could use in bash, will also work here. Arrays and advanced substitutions
+# will not work.
+#
+# How to use:
+#
+# Copy this file to the 'include' directory and name it tests_custom
+# Find your includedir with: lynis show includedir
+#
+#################################################################################
+#
+# Tips:
+#
+# Use each test ID only once in the Register function and prefix them with CUST
+#
+# Use big steps (e.g. 10) in numbering, so you can easily put in tests later.
+#
+# Help the community and share your checks on https://github.com/CISOfy/lynis/
+#
+#################################################################################
+
+#################################################################################
+#
+#
+    InsertSection "CRA-NETWORKING"
+    HARDEN_NETCOMMTOOLS_NEEDED=0
+#
+#################################################################################
+#
+    # Test        : CUST-0100
+    # Description : Check for installed network communication tools
+    # Notes       : 
+    Register --test-no CUST-0100 --weight L --network NO --category security --description "Check if one or more network communication tools are installed"
+    if [ ${SKIPTEST} -eq 0 ]; then
+        LogText "Test: Check if one or more network communication tools can be found on the system"
+        if [ ${NETWORK_TOOLS_INSTALLED} -eq 0 ]; then
+            LogText "Result: no networking tools found"
+            Display --indent 4 --text "- Installed networking tool(s)" --result "${STATUS_NOT_FOUND}" --color GREEN
+        else
+            if [ ${PRIVILEGED} -eq 0 ]; then
+                LogText "Result: found installed networking tool. See top of logfile which networking tools have been found or use ${GREPBINARY} to filter on 'network tool'"
+                Display --indent 4 --text "- Installed network tools(s)" --result "${STATUS_FOUND}" --color RED
+                ReportWarning "${TEST_NO}" "Network communication tools were found as a non priviledged user."
+            fi        
+        fi
+    fi
+#
+#################################################################################
+#
+    # Test        : HRDN-7222
+    # Description : Check for permissions of installed compilers
+    Register --test-no CUST-O110 --weight L --network NO --category security --description "Check network communication tools permissions"
+    if [ ${SKIPTEST} -eq 0 ]; then
+        LogText "Test: Check if one or more network communication tools can be found on the system"
+        HARDEN_NETCOMMTOOLS_NEEDED=0
+        if [ ${NETWORK_TOOLS_INSTALLED} -eq 0 ]; then
+            LogText "Result: no network communication tools found"
+        else
+            # TODO - c89 c99 cpp ld
+            TEST_BINARIES="${NCBINARY} ${NCATBINARY} ${TELNETBINARY} ${SSHBINARY}"
+            for ITEM in ${TEST_BINARIES}; do
+                FILE="${ITEM}"
+                LogText "Test: Check file permissions for ${ITEM}"
+                ShowSymlinkPath ${ITEM}
+                if [ -n "${SYMLINK}" ]; then
+                    FILE="${SYMLINK}"
+                fi
+
+                if IsWorldExecutable ${FILE}; then
+                    LogText "Binary: found ${FILE} (world executable)"
+                    Report "networkcommstool_world_executable[]=${FILE}"
+                    AddHP 2 3
+                    HARDEN_NETCOMMTOOLS_NEEDED=1
+                else
+                    # TODO - Remove this line, it's unneeded
+                    AddHP 3 3
+                fi
+            done
+
+            # Report suggestion is one or more compilers can be better hardened
+            if [ ${NETWORK_TOOLS_INSTALLED} -eq 1 ]; then
+                LogText "Result: at least one network communication tool could be better hardened by restricting executable access to root or group only"
+                ReportSuggestion "${TEST_NO}" "Harden network communication tool like restricting access to root user only"
+            fi
+        fi
+    fi
+#
+# Wait for keypress (unless --quick is being used)
+WaitForKeyPress
+
+#
+#================================================================================
+# Lynis - Security Auditing and System Hardening for Linux and UNIX - https://cisofy.com
