@@ -345,7 +345,9 @@
 
     CreateTempFile() {
         TEMP_FILE=""
-        if [ "${OS}" = "AIX" ]; then
+        if [ ${USE_CWD} -eq 1 ]; then
+            TEMP_FILE=$(mktemp -p . lynis.XXXXXXXXXX) || exit 1
+        elif [ "${OS}" = "AIX" ]; then
             RANDOMSTRING1="lynis-$(od -N4 -tu /dev/random | awk 'NR==1 {print $2} {}')"
             TEMP_FILE="/tmp/${RANDOMSTRING1}"
             touch ${TEMP_FILE}
@@ -2738,8 +2740,12 @@
             LogText "Temporary files: ${TEMP_FILES}"
             # Clean up temp files
             for FILE in ${TEMP_FILES}; do
-                # Temporary files should be in /tmp
-                TMPFILE=$(echo ${FILE} | grep -E "^/tmp/lynis" | grep -v "\.\.")
+                # Temporary files should be in /tmp - lol
+                if [ ${USE_CWD} -eq 1 ]; then
+                    TMPFILE=$(echo ${FILE} | grep -E "lynis\.[A-Za-z0-9]{10}")
+                else
+                    TMPFILE=$(echo ${FILE} | grep -E "^/tmp/lynis" | grep -v "\.\.")
+                fi
                 if [ -n "${TMPFILE}" ]; then
                     if [ -f "${TMPFILE}" ]; then
                         LogText "Action: removing temporary file ${TMPFILE}"
